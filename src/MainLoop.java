@@ -1,36 +1,18 @@
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 
-public class MainLoop {
-    public static int w = 10;
-    public static int h = 20;
-    public static int size = 30;
-    public static int framerate = 1000 / 12;
-    public static int width = w * size;
-    public static int height = h * size;
-    public static int id_count = 0;
-    public static long ptime = System.currentTimeMillis();
-    public static int[][][] tetromino_offsets = {{
-            {0, -2}, {0, -1}, {0, 0}, {0, 1}}, {
-            {0, -1}, {0, 0}, {-1, 0}, {-1, 1}}, {
-            {-1, -1}, {-1, 0}, {0, 0}, {0, 1}}, {
-            {-1, 0}, {0, 0}, {1, 0}, {0, 1}}, {
-            {-1, 0}, {0, 0}, {-1, 1}, {0, 1}}, {
-            {-1, 1}, {-1, 0}, {0, 0}, {1, 0}}, {
-            {-1, -1}, {-1, 0}, {0, 0}, {1, 0}}};
-    public static ArrayList<Tetromino> tetrominos = new ArrayList<>();
-    public static Window screen = new Window();
-    public static boolean needNew = false;
-    public static boolean[] heldKeys = {false, false, false, false};
+public class MainLoop extends Global {
 
     public static void main(String[] args) {
         tetrominos.add(new Tetromino());
         initKeyboard();
         while (true) {
+            // Wait for next frame
             long time = System.currentTimeMillis();
             if (time - ptime > framerate) {
                 ptime = time;
+
+                // Update tetrominos
                 needNew = true;
                 for (Tetromino t : tetrominos) {
                     if (!t.done) {
@@ -38,8 +20,53 @@ public class MainLoop {
                         needNew = false;
                     }
                 }
-                if (needNew) tetrominos.add(new Tetromino());
+
+                // Render
                 screen.repaint();
+
+                // Update board
+                if (needNew) {
+                    checkLines();
+                    tetrominos.add(new Tetromino());
+                }
+            }
+        }
+    }
+
+    private static void checkLines() {
+        // Fill the board
+        boolean[][] board = new boolean[h][w];
+        for (Tetromino t : tetrominos) {
+            for (int i = 0; i < 4; i++) {
+                int[] cords = t.offsets[i];
+                if (cords[1] == Global.w * 2) continue;
+                if (t.y + cords[0] >= 20) continue;
+                board[t.y + cords[0]][t.x + cords[1]] = true;
+            }
+        }
+
+        // Remove finished lines
+        for (int i = 0; i < board.length; i++) {
+            // Check for finished lines
+            boolean remove = true;
+            for (boolean bb : board[i]) {
+                if (!bb) remove = false;
+            }
+
+            // Remove if finished
+            if (remove) {
+                for (Tetromino t : tetrominos) {
+                    for (int j = 0; j < 4; j++) {
+                        int[] cords = t.offsets[j];
+                        if (cords[1] == Global.w * 2) continue;
+                        if (t.y + cords[0] == i) {
+                            System.out.println("somehow?");
+                            t.offsets[j][1] = w * 2; // TODO: Fix this somehow
+                        } else if (t.y + cords[0] < i) {
+                            t.offsets[j][0]++;
+                        }
+                    }
+                }
             }
         }
     }
@@ -52,33 +79,28 @@ public class MainLoop {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyChar() == 'a') MainLoop.heldKeys[0] = true;
-                if (e.getKeyChar() == 's') MainLoop.heldKeys[1] = true;
-                if (e.getKeyChar() == 'd') MainLoop.heldKeys[2] = true;
-                if (e.getKeyChar() == 'w' && !MainLoop.heldKeys[3]) {
+                if (e.getKeyChar() == 'a') heldKeys[0] = true;
+                if (e.getKeyChar() == 's') heldKeys[1] = true;
+                if (e.getKeyChar() == 'd') heldKeys[2] = true;
+                if (e.getKeyChar() == 'w' && !heldKeys[3]) {
                     tetrominos.get(tetrominos.size() - 1).incrementRotation();
-                    MainLoop.heldKeys[3] = true;
+                    heldKeys[3] = true;
                 }
 
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
-                if (e.getKeyChar() == 'a') MainLoop.heldKeys[0] = false;
-                if (e.getKeyChar() == 's') MainLoop.heldKeys[1] = false;
-                if (e.getKeyChar() == 'd') MainLoop.heldKeys[2] = false;
-                if (e.getKeyChar() == 'w') MainLoop.heldKeys[3] = false;
+                if (e.getKeyChar() == 'a') heldKeys[0] = false;
+                if (e.getKeyChar() == 's') heldKeys[1] = false;
+                if (e.getKeyChar() == 'd') heldKeys[2] = false;
+                if (e.getKeyChar() == 'w') heldKeys[3] = false;
             }
         });
     }
 
     public static void exit() {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        System.exit(69);
+        if (System.currentTimeMillis() - ptime > 500) System.exit(69);
     }
 
 }
