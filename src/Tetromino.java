@@ -3,15 +3,16 @@ import java.awt.*;
 public class Tetromino {
     public int x, y, type, rotation, id;
     public boolean done = false;
-    private int[][] offsets;
+    public int[][] offsets;
 
     Tetromino() {
-        this.x = MainLoop.w / 2;
         this.y = -2;
         this.rotation = 0;
-        this.id = MainLoop.id_count++;
+        this.x = Global.w / 2;
+        this.id = Global.id_count++;
         this.type = (int) (Math.random() * 7);
         this.offsets = MainLoop.getOffsets(this.type, this.rotation);
+        //this.offsets = Global.getOffsets(type,); // TODO: Fix this somehow
     }
 
     public void incrementRotation() {
@@ -20,37 +21,28 @@ public class Tetromino {
     }
 
     public void show(Graphics2D g2d) {
-        Color c = Color.WHITE;
-        switch (this.type) {
-            case 0 -> c = Color.BLUE;
-            case 1 -> c = Color.RED;
-            case 2 -> c = Color.GREEN;
-            case 3 -> c = Color.MAGENTA;
-            case 4 -> c = Color.YELLOW;
-            case 5 -> c = new Color(255, 150, 0);
-            case 6 -> c = Color.CYAN;
-        }
-        g2d.setColor(c);
+        g2d.setColor(Global.colors[this.type]);
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
-            g2d.fillRect((this.x + cords[1]) * MainLoop.size + 1, (this.y + cords[0]) * MainLoop.size + 1, MainLoop.size - 2, MainLoop.size - 2);
+            g2d.fillRect((this.x + cords[1]) * Global.size + 1, (this.y + cords[0]) * Global.size + 1, Global.size - 2, Global.size - 2);
+            if (!done) g2d.drawString(cords[0] + ":" + cords[1] + "   " + this.x + ":" + this.y, 20, 40 + 20 * i);
         }
     }
 
     public void update() {
-        if (MainLoop.heldKeys[0]) this.x--;
-        if (MainLoop.heldKeys[2]) this.x++;
+        if (Global.heldKeys[0]) this.x--;
+        if (Global.heldKeys[2]) this.x++;
         checkWallCollision();
         checkXCollision();
         this.y++;
         checkFloorCollision();
         if (!done) checkYCollision();
-        if (MainLoop.heldKeys[1] && !done) {
+        if (Global.heldKeys[1] && !done) {
             this.y++;
             checkFloorCollision();
             if (!done) checkYCollision();
         }
-        if (MainLoop.heldKeys[1] && !done) {
+        if (Global.heldKeys[1] && !done) {
             this.y++;
             checkFloorCollision();
             if (!done) checkYCollision();
@@ -60,15 +52,17 @@ public class Tetromino {
     private void checkWallCollision() {
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
+            if (cords[1] == Global.w * 2) break;
             while (this.x + cords[1] < 0) this.x++;
-            while (this.x + cords[1] >= MainLoop.w) this.x--;
+            while (this.x + cords[1] >= Global.w) this.x--;
         }
     }
 
     private void checkFloorCollision() {
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
-            if (this.y + cords[0] >= MainLoop.h) {
+            if (cords[1] == Global.w * 2) continue;
+            if (this.y + cords[0] >= Global.h) {
                 this.y--;
                 this.done = true;
             }
@@ -76,15 +70,16 @@ public class Tetromino {
     }
 
     private void checkXCollision() {
-        for (Tetromino t : MainLoop.tetrominos) {
+        for (Tetromino t : Global.tetrominos) {
             if (this.id != t.id) {
                 for (int i = 0; i < 4; i++) {
                     int[] cords = this.offsets[i];
+                    if (cords[1] == Global.w * 2) continue;
                     for (int j = 0; j < 4; j++) {
-                        int[] other_cords = t.offsets[i];
+                        int[] other_cords = t.offsets[j];
                         if (this.x + cords[1] == t.x + other_cords[1] && this.y + cords[0] == t.y + other_cords[0]) {
-                            if (MainLoop.heldKeys[0]) this.x++;
-                            if (MainLoop.heldKeys[2]) this.x--;
+                            if (Global.heldKeys[0]) this.x++;
+                            if (Global.heldKeys[2]) this.x--;
                         }
                     }
                 }
@@ -94,10 +89,11 @@ public class Tetromino {
     }
 
     private void checkYCollision() {
-        for (Tetromino t : MainLoop.tetrominos) {
+        for (Tetromino t : Global.tetrominos) {
             if (this.id != t.id) {
                 for (int i = 0; i < 4; i++) {
                     int[] cords = this.offsets[i];
+                    if (cords[1] == Global.w * 2) continue;
                     for (int j = 0; j < 4; j++) {
                         int[] other_cords = t.offsets[j];
                         if (this.x + cords[1] == t.x + other_cords[1] && this.y + cords[0] == t.y + other_cords[0]) {
