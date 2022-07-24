@@ -11,12 +11,13 @@ public class Tetromino {
         this.x = Global.w / 2;
         this.id = Global.id_count++;
         this.type = (int) (Math.random() * 7);
-        this.offsets = Global.getOffsets(type); // TODO: Fix this somehow
+        this.offsets = MainLoop.getOffsets(this.type, this.rotation);
+        //this.offsets = Global.getOffsets(type,); // TODO: Fix this somehow
     }
 
     public void incrementRotation() {
         this.rotation = (this.rotation + 1) % 4;
-        this.offsets = rotate(offsets);
+        this.offsets = MainLoop.getOffsets(this.type, this.rotation);
     }
 
     public void show(Graphics2D g2d) {
@@ -46,16 +47,6 @@ public class Tetromino {
             checkFloorCollision();
             if (!done) checkYCollision();
         }
-    }
-
-    private int[][] rotate(int[][] cords) {
-        int[][] result = new int[4][2];
-        for (int i = 0; i < 4; i++) {
-            if (cords[i][1] == Global.w * 2) continue;
-            result[i][0] = cords[i][1];
-            result[i][1] = -cords[i][0];
-        }
-        return result;
     }
 
     private void checkWallCollision() {
@@ -114,6 +105,5 @@ public class Tetromino {
                 }
             }
         }
-
     }
 }

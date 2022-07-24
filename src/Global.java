@@ -25,7 +25,7 @@ public class Global {
     public static int size = 30;
     public static int width = w * size;
     public static int height = h * size;
-    public static int framerate = 1000 / 12;
+    public static int framerate = 1000 / 8;
     public static int id_count = 0;
     public static long ptime = System.currentTimeMillis();
     public static ArrayList<Tetromino> tetrominos = new ArrayList<>();

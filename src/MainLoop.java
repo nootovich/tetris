@@ -1,8 +1,8 @@
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.sql.*;
 
 public class MainLoop extends Global {
-
     public static void main(String[] args) {
         tetrominos.add(new Tetromino());
         initKeyboard();
@@ -86,7 +86,6 @@ public class MainLoop extends Global {
                     tetrominos.get(tetrominos.size() - 1).incrementRotation();
                     heldKeys[3] = true;
                 }
-
             }
 
             @Override
@@ -97,6 +96,22 @@ public class MainLoop extends Global {
                 if (e.getKeyChar() == 'w') heldKeys[3] = false;
             }
         });
+    }
+
+    public static int[][] getOffsets(int type, int rotation) {
+        int[][] result = new int[4][2];
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/tetrominos", "root", "1234"); Statement stmt = conn.createStatement();) {
+            ResultSet temp = stmt.executeQuery("select cords from offsets where type = " + type + " and rotation = " + rotation);
+            temp.next();
+            String[] cords = temp.getString("cords").split(",");
+            for (int i = 0; i < 4; i++) {
+                result[i][0] = Integer.parseInt(cords[2 * i]);
+                result[i][1] = Integer.parseInt(cords[2 * i + 1]);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        return result;
     }
 
     public static void exit() {
