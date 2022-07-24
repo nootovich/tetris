@@ -17,6 +17,6 @@ public class Canvas extends JPanel {
         }
         g2d.setColor(Color.WHITE);
         g2d.drawString(Arrays.toString(MainLoop.heldKeys), 10, 10);
-        g2d.drawString(MainLoop.tetrominos.get(MainLoop.tetrominos.size() - 1).rotation + "", 10, 30);
+//        g2d.drawString(MainLoop.tetrominos.get(MainLoop.tetrominos.size() - 1).rotation + "", 10, 30);
     }
 }

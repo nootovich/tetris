@@ -1,25 +1,17 @@
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class MainLoop {
-    public static int w = 10;
-    public static int h = 20;
+    public static int w = 20;
+    public static int h = 30;
     public static int size = 30;
-    public static int framerate = 1000 / 12;
+    public static int framerate = 1000 / 5;
     public static int width = w * size;
     public static int height = h * size;
     public static int id_count = 0;
     public static long ptime = System.currentTimeMillis();
-    public static int[][][] tetromino_offsets = {{
-            {0, -2}, {0, -1}, {0, 0}, {0, 1}}, {
-            {0, -1}, {0, 0}, {-1, 0}, {-1, 1}}, {
-            {-1, -1}, {-1, 0}, {0, 0}, {0, 1}}, {
-            {-1, 0}, {0, 0}, {1, 0}, {0, 1}}, {
-            {-1, 0}, {0, 0}, {-1, 1}, {0, 1}}, {
-            {-1, 1}, {-1, 0}, {0, 0}, {1, 0}}, {
-            {-1, -1}, {-1, 0}, {0, 0}, {1, 0}}};
     public static ArrayList<Tetromino> tetrominos = new ArrayList<>();
     public static Window screen = new Window();
     public static boolean needNew = false;
@@ -60,7 +52,6 @@ public class MainLoop {
                     tetrominos.get(tetrominos.size() - 1).incrementRotation();
                     MainLoop.heldKeys[3] = true;
                 }
-
             }
 
             @Override
@@ -73,13 +64,24 @@ public class MainLoop {
         });
     }
 
-    public static void exit() {
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public static int[][] getOffsets(int type, int rotation) {
+        int[][] result = new int[4][2];
+        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/tetrominos", "root", "1234"); Statement stmt = conn.createStatement();) {
+            ResultSet temp = stmt.executeQuery("select cords from offsets where type = " + type + " and rotation = " + rotation);
+            temp.next();
+            String[] cords = temp.getString("cords").split(",");
+            for (int i = 0; i < 4; i++) {
+                result[i][0] = Integer.parseInt(cords[2 * i]);
+                result[i][1] = Integer.parseInt(cords[2 * i + 1]);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
         }
-        System.exit(69);
+        return result;
+    }
+
+    public static void exit() {
+        if (System.currentTimeMillis() - ptime > 500) System.exit(69);
     }
 
 }
