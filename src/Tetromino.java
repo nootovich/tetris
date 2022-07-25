@@ -3,6 +3,7 @@ import java.awt.*;
 public class Tetromino {
     public int x, y, type, rotation, id;
     public boolean done = false;
+    public boolean special = false;
     public int[][] offsets;
 
     Tetromino() {
@@ -10,8 +11,31 @@ public class Tetromino {
         this.rotation = 0;
         this.x = Global.w / 2;
         this.id = Global.id_count++;
-        this.type = (int) (Math.random() * 7);
+        this.type = Global.next;
+        Global.next = (int) (Math.random() * 7);
         this.offsets = MainLoop.getOffsets(this.type, this.rotation);
+    }
+
+    Tetromino(int type) {
+        this.x = 0;
+        this.y = 0;
+        this.id = -1;
+        this.done = false;
+        this.type = type;
+        this.rotation = 0;
+        this.special = true;
+        this.offsets = MainLoop.getOffsets(type, 0);
+    }
+
+    Tetromino(int x, int y, int id, int type, int rotation) {
+        this.x = x;
+        this.y = y;
+        this.id = id;
+        this.done = false;
+        this.type = type;
+        this.special = true;
+        this.rotation = rotation;
+        this.offsets = MainLoop.getOffsets(type, rotation);
     }
 
     public void incrementRotation() {
@@ -23,29 +47,69 @@ public class Tetromino {
         g2d.setColor(Global.colors[this.type]);
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
-            g2d.fillRect((this.x + cords[1]) * Global.size + 1, (this.y + cords[0]) * Global.size + 1, Global.size - 2, Global.size - 2);
-            if (!done) g2d.drawString(cords[0] + ":" + cords[1] + "   " + this.x + ":" + this.y, 20, 40 + 20 * i);
+            g2d.fillRect(
+                    (this.x + cords[1]) * Global.size + 1,
+                    (this.y + cords[0]) * Global.size + 1,
+                    Global.size - 2,
+                    Global.size - 2
+            );
+        }
+    }
+
+    public void showNext(Graphics2D g2d, int offset_x, int offset_y, int size) {
+        this.type = Global.next;
+        this.offsets = MainLoop.getOffsets(this.type, 0);
+        g2d.setColor(Global.colors[this.type]);
+        for (int i = 0; i < 4; i++) {
+            int[] cords = this.offsets[i];
+            g2d.fillRect(
+                    (offset_x + cords[1]) * size + 1,
+                    (offset_y + cords[0]) * size + 1,
+                    size - 2,
+                    size - 2
+            );
+        }
+    }
+
+    public void showGhost(Graphics2D g2d) {
+        g2d.setColor(Color.GRAY);
+        for (int i = 0; i < 4; i++) {
+            int[] cords = this.offsets[i];
+            g2d.fillRect(
+                    (this.x + cords[1]) * Global.size + 1,
+                    (this.y + cords[0]) * Global.size + 1,
+                    Global.size - 2,
+                    Global.size - 2
+            );
         }
     }
 
     public void update() {
-        if (Global.heldKeys[0]) this.x--;
-        if (Global.heldKeys[2]) this.x++;
-        checkWallCollision();
+        if (Global.heldKeys[0] && !(Global.heldKeys[1] || Global.heldKeys[4])) this.x--;
+        if (Global.heldKeys[2] && !(Global.heldKeys[1] || Global.heldKeys[4])) this.x++;
         checkXCollision();
+        moveDown();
+        if (Global.heldKeys[1] && !Global.heldKeys[4] && !done) {
+            moveDown();
+            moveDown();
+        }
+        while (Global.heldKeys[4] && !done) {
+            moveDown();
+        }
+    }
+
+    public void updateGhost() {
+        int reps = 0;
+        while (!done && reps < Global.height && Global.graceStart == -1) {
+            reps++;
+            moveDown();
+        }
+    }
+
+    public void moveDown() {
         this.y++;
         checkFloorCollision();
         if (!done) checkYCollision();
-        if (Global.heldKeys[1] && !done) {
-            this.y++;
-            checkFloorCollision();
-            if (!done) checkYCollision();
-        }
-        if (Global.heldKeys[1] && !done) {
-            this.y++;
-            checkFloorCollision();
-            if (!done) checkYCollision();
-        }
     }
 
     private void checkWallCollision() {
@@ -69,6 +133,7 @@ public class Tetromino {
     }
 
     private void checkXCollision() {
+        checkWallCollision();
         for (Tetromino t : Global.tetrominos) {
             if (this.id != t.id) {
                 for (int i = 0; i < 4; i++) {
@@ -84,7 +149,6 @@ public class Tetromino {
                 }
             }
         }
-
     }
 
     private void checkYCollision() {
@@ -92,7 +156,7 @@ public class Tetromino {
 
         // Going through all other tetrominos, getting their positions and checking for collisions
         for (Tetromino t : Global.tetrominos) {
-            if (this.id != t.id) {
+            if (this.id != t.id && !t.special) {
                 for (int i = 0; i < 4; i++) {
                     int[] cords = this.offsets[i];
                     if (cords[1] == Global.w * 2) continue;
@@ -107,7 +171,7 @@ public class Tetromino {
                             this.y--;
 
                             // Grace period start
-                            if (Global.graceStart == -1 && !Global.heldKeys[1]) {
+                            if (Global.graceStart == -1 && !Global.heldKeys[4] && !special) {
                                 Global.graceStart = System.currentTimeMillis();
 
                                 // If grace period time has run out place tetromino

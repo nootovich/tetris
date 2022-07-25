@@ -52,6 +52,9 @@ public class MainLoop extends Global {
             }
         }
 
+        // Count the number of removed lines
+        int removedLines = 0;
+
         // Go through every line
         for (int i = 0; i < board.length; i++) {
 
@@ -66,6 +69,7 @@ public class MainLoop extends Global {
 
             // If line needs to be removed go through every tetromino and remove squares at a respective y coordinate while also moving everything from above down
             if (remove) {
+                removedLines++;
                 for (Tetromino t : tetrominos) {
                     for (int j = 0; j < 4; j++) {
                         int[] cords = t.offsets[j];
@@ -85,6 +89,9 @@ public class MainLoop extends Global {
                 }
             }
         }
+
+        // Increase score based on number of removed lines
+        if (removedLines > 0) Global.score += Math.pow(2, removedLines - 1) * 1000;
     }
 
     private static void initKeyboard() { // TODO: make prettier
@@ -102,7 +109,7 @@ public class MainLoop extends Global {
                 if (e.getKeyChar() == 'a') heldKeys[0] = true;
                 if (e.getKeyChar() == 's') heldKeys[1] = true;
                 if (e.getKeyChar() == 'd') heldKeys[2] = true;
-
+                if (e.getKeyChar() == ' ') heldKeys[4] = true;
             }
 
             @Override
@@ -111,6 +118,7 @@ public class MainLoop extends Global {
                 if (e.getKeyChar() == 's') heldKeys[1] = false;
                 if (e.getKeyChar() == 'd') heldKeys[2] = false;
                 if (e.getKeyChar() == 'w') heldKeys[3] = false;
+                if (e.getKeyChar() == ' ') heldKeys[4] = false;
             }
         });
     }
@@ -133,7 +141,7 @@ public class MainLoop extends Global {
 
     public static void exit() {
         gameover = true;
-        if (System.currentTimeMillis() - prevFrame > 500) System.exit(69);
+        if (System.currentTimeMillis() - prevFrame > 500) System.exit(Global.score);
     }
 
 }

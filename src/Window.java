@@ -1,12 +1,12 @@
 import javax.swing.*;
 
 public class Window extends JFrame {
-    Canvas canvas;
+    generalView generalView;
 
     Window() {
-        canvas = new Canvas();
+        generalView = new generalView();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.add(canvas);
+        this.add(generalView);
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
