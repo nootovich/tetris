@@ -12,7 +12,6 @@ public class Tetromino {
         this.id = Global.id_count++;
         this.type = (int) (Math.random() * 7);
         this.offsets = MainLoop.getOffsets(this.type, this.rotation);
-        //this.offsets = Global.getOffsets(type,); // TODO: Fix this somehow
     }
 
     public void incrementRotation() {
@@ -89,6 +88,9 @@ public class Tetromino {
     }
 
     private void checkYCollision() {
+        boolean collision = false;
+
+        // Going through all other tetrominos, getting their positions and checking for collisions
         for (Tetromino t : Global.tetrominos) {
             if (this.id != t.id) {
                 for (int i = 0; i < 4; i++) {
@@ -96,14 +98,36 @@ public class Tetromino {
                     if (cords[1] == Global.w * 2) continue;
                     for (int j = 0; j < 4; j++) {
                         int[] other_cords = t.offsets[j];
-                        if (this.x + cords[1] == t.x + other_cords[1] && this.y + cords[0] == t.y + other_cords[0]) {
+
+                        // Collision
+                        if (this.x + cords[1] == t.x + other_cords[1] &&
+                                this.y + cords[0] == t.y + other_cords[0]) {
+
+                            collision = true;
                             this.y--;
-                            this.done = true;
-                            if (this.y <= 0) MainLoop.exit();
+
+                            // Grace period start
+                            if (Global.graceStart == -1 && !Global.heldKeys[1]) {
+                                Global.graceStart = System.currentTimeMillis();
+
+                                // If grace period time has run out place tetromino
+                            } else if (System.currentTimeMillis() - Global.graceStart > Global.gracePeriodTime) {
+                                this.done = true;
+                                Global.graceStart = -1;
+                            }
                         }
+                    }
+
+                    // If any square is outside of view end game
+                    for (int j = 0; j < 4; j++) {
+                        int[] other_cords = t.offsets[j];
+                        if (collision && this.y + other_cords[0] <= 0) MainLoop.exit();
                     }
                 }
             }
+        }
+        if (!collision) {
+            Global.graceStart = -1;
         }
     }
 }

@@ -2,15 +2,20 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.sql.*;
 
+// TODO: Fix a bug when you get invalid positions(oob, tp across a map) when rotating
+
 public class MainLoop extends Global {
     public static void main(String[] args) {
+
+        // Init
         tetrominos.add(new Tetromino());
         initKeyboard();
-        while (true) {
+        while (!gameover) {
+
             // Wait for next frame
             long time = System.currentTimeMillis();
-            if (time - ptime > framerate) {
-                ptime = time;
+            if (time - prevFrame > framerate) {
+                prevFrame = time;
 
                 // Update tetrominos
                 needNew = true;
@@ -24,17 +29,19 @@ public class MainLoop extends Global {
                 // Render
                 screen.repaint();
 
-                // Update board
+                // Update game
                 if (needNew) {
                     checkLines();
                     tetrominos.add(new Tetromino());
                 }
             }
         }
+        while (gameover) exit();
     }
 
     private static void checkLines() {
-        // Fill the board
+
+        // Get positions of all tetrominos and fill the board with their positions
         boolean[][] board = new boolean[h][w];
         for (Tetromino t : tetrominos) {
             for (int i = 0; i < 4; i++) {
@@ -45,23 +52,32 @@ public class MainLoop extends Global {
             }
         }
 
-        // Remove finished lines
+        // Go through every line
         for (int i = 0; i < board.length; i++) {
-            // Check for finished lines
+
+            // Check if it is full
             boolean remove = true;
             for (boolean bb : board[i]) {
-                if (!bb) remove = false;
+                if (!bb) {
+                    remove = false;
+                    break;
+                }
             }
 
-            // Remove if finished
+            // If line needs to be removed go through every tetromino and remove squares at a respective y coordinate while also moving everything from above down
             if (remove) {
                 for (Tetromino t : tetrominos) {
                     for (int j = 0; j < 4; j++) {
                         int[] cords = t.offsets[j];
+
+                        // If square is already oob then skip
                         if (cords[1] == Global.w * 2) continue;
+
+                        // Moving square oob instead of removing for simplicity
                         if (t.y + cords[0] == i) {
-                            System.out.println("somehow?");
-                            t.offsets[j][1] = w * 2; // TODO: Fix this somehow
+                            t.offsets[j][1] = w * 2;
+
+                            // Move square down if it is not removed
                         } else if (t.y + cords[0] < i) {
                             t.offsets[j][0]++;
                         }
@@ -71,7 +87,7 @@ public class MainLoop extends Global {
         }
     }
 
-    private static void initKeyboard() {
+    private static void initKeyboard() { // TODO: make prettier
         screen.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -79,13 +95,14 @@ public class MainLoop extends Global {
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyChar() == 'a') heldKeys[0] = true;
-                if (e.getKeyChar() == 's') heldKeys[1] = true;
-                if (e.getKeyChar() == 'd') heldKeys[2] = true;
                 if (e.getKeyChar() == 'w' && !heldKeys[3]) {
                     tetrominos.get(tetrominos.size() - 1).incrementRotation();
                     heldKeys[3] = true;
                 }
+                if (e.getKeyChar() == 'a') heldKeys[0] = true;
+                if (e.getKeyChar() == 's') heldKeys[1] = true;
+                if (e.getKeyChar() == 'd') heldKeys[2] = true;
+
             }
 
             @Override
@@ -100,22 +117,23 @@ public class MainLoop extends Global {
 
     public static int[][] getOffsets(int type, int rotation) {
         int[][] result = new int[4][2];
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/tetrominos", "root", "1234"); Statement stmt = conn.createStatement();) {
+        try (Connection conn = DriverManager.getConnection(Secret.url, Secret.username, Secret.password); Statement stmt = conn.createStatement()) {
             ResultSet temp = stmt.executeQuery("select cords from offsets where type = " + type + " and rotation = " + rotation);
             temp.next();
             String[] cords = temp.getString("cords").split(",");
             for (int i = 0; i < 4; i++) {
-                result[i][0] = Integer.parseInt(cords[2 * i]);
-                result[i][1] = Integer.parseInt(cords[2 * i + 1]);
+                result[i][1] = Integer.parseInt(cords[2 * i]);
+                result[i][0] = Integer.parseInt(cords[2 * i + 1]);
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return result;
     }
 
     public static void exit() {
-        if (System.currentTimeMillis() - ptime > 500) System.exit(69);
+        gameover = true;
+        if (System.currentTimeMillis() - prevFrame > 500) System.exit(69);
     }
 
 }
