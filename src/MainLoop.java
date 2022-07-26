@@ -10,6 +10,7 @@ public class MainLoop extends Global {
         // Init
         tetrominos.add(new Tetromino());
         initKeyboard();
+        getHighscore();
         while (!gameover) {
 
             // Wait for next frame
@@ -79,11 +80,11 @@ public class MainLoop extends Global {
 
                         // Moving square oob instead of removing for simplicity
                         if (t.y + cords[0] == i) {
-                            t.offsets[j][1] = w * 2;
+                            t.setOffset(j, 1, w * 2);
 
                             // Move square down if it is not removed
                         } else if (t.y + cords[0] < i) {
-                            t.offsets[j][0]++;
+                            t.incrementOffset(j, 0);
                         }
                     }
                 }
@@ -91,7 +92,12 @@ public class MainLoop extends Global {
         }
 
         // Increase score based on number of removed lines
-        if (removedLines > 0) Global.score += Math.pow(2, removedLines - 1) * 1000;
+        if (removedLines > 0) {
+            score += Math.pow(2, removedLines - 1) * 1000;
+            if (score > highscore) {
+                setHighscore(score);
+            }
+        }
     }
 
     private static void initKeyboard() { // TODO: make prettier
@@ -137,6 +143,25 @@ public class MainLoop extends Global {
             e.printStackTrace();
         }
         return result;
+    }
+
+    public static void getHighscore() {
+        try (Connection conn = DriverManager.getConnection(Secret.url, Secret.username, Secret.password); Statement stmt = conn.createStatement()) {
+            ResultSet temp = stmt.executeQuery("select val from highscore");
+            temp.next();
+            highscore = temp.getInt("val");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void setHighscore(int hs) {
+        try (Connection conn = DriverManager.getConnection(Secret.url, Secret.username, Secret.password); Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate("update highscore set val=" + hs + " where val=" + highscore);
+            highscore = hs;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void exit() {

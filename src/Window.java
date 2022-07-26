@@ -1,12 +1,12 @@
 import javax.swing.*;
 
 public class Window extends JFrame {
-    generalView generalView;
+    MainView mainView;
 
     Window() {
-        generalView = new generalView();
+        mainView = new MainView();
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.add(generalView);
+        this.add(mainView);
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);

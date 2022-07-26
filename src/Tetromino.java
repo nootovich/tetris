@@ -43,6 +43,14 @@ public class Tetromino {
         this.offsets = MainLoop.getOffsets(this.type, this.rotation);
     }
 
+    public void setOffset(int j, int i, int i1) {
+        this.offsets[j][i] = i1;
+    }
+
+    public void incrementOffset(int j, int i) {
+        this.offsets[j][i]++;
+    }
+
     public void show(Graphics2D g2d) {
         g2d.setColor(Global.colors[this.type]);
         for (int i = 0; i < 4; i++) {
@@ -56,23 +64,23 @@ public class Tetromino {
         }
     }
 
-    public void showNext(Graphics2D g2d, int offset_x, int offset_y, int size) {
+    public void showNext(Graphics2D g2d, float offset_x, float offset_y, float size) {
         this.type = Global.next;
         this.offsets = MainLoop.getOffsets(this.type, 0);
         g2d.setColor(Global.colors[this.type]);
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
             g2d.fillRect(
-                    (offset_x + cords[1]) * size + 1,
-                    (offset_y + cords[0]) * size + 1,
-                    size - 2,
-                    size - 2
+                    (int) (offset_x * Global.size + cords[1] * size + 1),
+                    (int) (offset_y * Global.size + cords[0] * size + 1),
+                    (int) (size - 2),
+                    (int) (size - 2)
             );
         }
     }
 
     public void showGhost(Graphics2D g2d) {
-        g2d.setColor(Color.GRAY);
+        g2d.setColor(Color.DARK_GRAY);
         for (int i = 0; i < 4; i++) {
             int[] cords = this.offsets[i];
             g2d.fillRect(
@@ -185,7 +193,7 @@ public class Tetromino {
                     // If any square is outside of view end game
                     for (int j = 0; j < 4; j++) {
                         int[] other_cords = t.offsets[j];
-                        if (collision && this.y + other_cords[0] <= 0) MainLoop.exit();
+                        if (collision && this.y + other_cords[0] < 0) MainLoop.exit();
                     }
                 }
             }
@@ -194,4 +202,5 @@ public class Tetromino {
             Global.graceStart = -1;
         }
     }
+
 }
